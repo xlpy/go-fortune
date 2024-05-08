@@ -18,6 +18,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Run Trivy vulnerability scanner
+        id: trivy
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
@@ -28,7 +29,7 @@ jobs:
           output: 'trivy-report.txt'
           
       - name: Send custom JSON data to Slack workflow
-        if: ${{ success() }}
+        if: ${{ steps.trivy.outcome == 'success' }}
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_CHANNEL: 'test-submission'
@@ -45,7 +46,7 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
         
       - name: Send Failure Notification to Slack
-        if: ${{ failure() }}
+        if: ${{ steps.trivy.outcome == 'failure' }}
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_CHANNEL: 'test-submission'
@@ -58,10 +59,15 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Send Notification to Slack (Failed)
-        if: ${{ failure() }}
+        if: ${{ steps.trivy.outcome == 'failure' }}
         uses: MeilCli/slack-upload-file@v4
         with:
           slack_token: ${{ secrets.SLACK_TOKEN }}
           channel_id: ${{ secrets.SLACK_CHANNEL_ID }}
           file_path: 'trivy-report.txt'
           initial_comment: 'Scan report by Xena'
+
+      - name: Docker
+        if: ${{ steps.trivy.outcome == 'success' }}
+        run: #remove this later, replace with your docker actions
+          echo 'running docker'
