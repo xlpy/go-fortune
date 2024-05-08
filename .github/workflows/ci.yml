@@ -22,8 +22,10 @@ jobs:
         with:
           scan-type: 'fs'
           scan-ref: '.'
-          severity: 'CRITICAL'
+          severity: 'CRITICAL, HIGH'
           exit-code: 1
+          format: 'table'
+          output: 'trivy-report.txt'
           
       - name: Send custom JSON data to Slack workflow
         if: ${{ success() }}
@@ -41,8 +43,25 @@ jobs:
           SLACK_USERNAME: Xena
           ENABLE_ESCAPES: true
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        
+      - name: Send Failure Notification to Slack
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: 'test-submission'
+          SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
+          SLACK_ICON: https://github.com/rtCamp.png?size=48
+          SLACK_MESSAGE: 'Failed trivy scan, see uploaded report'
+          SLACK_TITLE: 'Scan failed - Xena'
+          SLACK_USERNAME: Xena
+          ENABLE_ESCAPES: true
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Send Notification to Slack (Failed)
         if: ${{ failure() }}
-        run: 
-          echo "FAILURE"
+        uses: MeilCli/slack-upload-file@v4
+        with:
+          slack_token: ${{ secrets.SLACK_TOKEN }}
+          channel_id: ${{ secrets.SLACK_CHANNEL_ID }}
+          file_path: 'trivy-report.txt'
+          initial_comment: 'Scan report by Xena'
