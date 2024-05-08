@@ -37,7 +37,7 @@ jobs:
       
           
       - name: Send custom JSON data to Slack workflow
-        if: ${{ steps.trivy.outcome == 'success' }}
+        if: ${{ success()}}
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_CHANNEL: 'test-submission'
@@ -54,7 +54,7 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
         
       - name: Send Failure Notification to Slack
-        if: ${{ steps.trivy.outcome == 'failure' }}
+        if: ${{ failure() }}
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_CHANNEL: 'test-submission'
@@ -67,7 +67,7 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Send Notification to Slack (Failed)
-        if: ${{ steps.trivy.outcome == 'failure' }}
+        if: ${{ failure() }}
         uses: MeilCli/slack-upload-file@v4
         with:
           slack_token: ${{ secrets.SLACK_TOKEN }}
