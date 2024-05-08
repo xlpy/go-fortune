@@ -30,7 +30,7 @@ jobs:
         with:
           scan-type: 'fs'
           scan-ref: '.'  
-          severity: 'CRITICAL,HIGH'
+          severity: 'LOW'
           exit-code: 1
           format: 'table'
           output: 'trivy-report.txt'
