@@ -101,8 +101,9 @@ jobs:
       - name: Sign Docker image with Cosign
         if: ${{ steps.trivy.outcome == 'success' }}
         run: |
-          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" | base64 -d > cosign.key
+          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
           cosign sign -key cosign.key xenalimpinying/go-fortune:${{ github.sha }}
         env:
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        
         
