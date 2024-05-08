@@ -32,7 +32,8 @@ jobs:
           SLACK_CHANNEL: 'test-submission'
           SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
           SLACK_ICON: https://github.com/rtCamp.png?size=48
-          SLACK_MESSAGE: '*Name*: Xena\n*Metriculation*:abc123'
+          SLACK_MESSAGE: '*Name*: Xena\
+            *Metriculation*:abc123'
           SLACK_TITLE: 'Image build and signed'
           SLACK_USERNAME: Xena
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
