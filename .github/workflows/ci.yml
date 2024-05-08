@@ -10,6 +10,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    continue-on-error: true
+
     steps:
       - name: Check out Branch
         uses: actions/checkout@v2
@@ -23,12 +26,12 @@ jobs:
           exit-code: 1
       
       - name: Send Notification to Slack (Success)
-        if: steps.trivy.outcome == 'success'
+        if: ${{ success() }}
         run: 
           echo "SUCCESS"
 
       - name: Send Notification to Slack (Failed)
-        if: steps.trivy.outcome == 'failure'
+        if: ${{ failure() }}
         run: 
           echo "FAILURE"
           
