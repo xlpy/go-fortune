@@ -24,14 +24,31 @@ jobs:
           scan-ref: '.'
           severity: 'CRITICAL'
           exit-code: 1
-      
-      - name: Send Notification to Slack (Success)
+          
+      - name: Send custom JSON data to Slack workflow
         if: ${{ success() }}
-        run: 
-          echo "SUCCESS"
+        id: slack
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          # For posting a rich message using Block Kit
+          payload: |
+            {
+              "text": "Scan failed - Xena",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "test"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
       - name: Send Notification to Slack (Failed)
         if: ${{ failure() }}
         run: 
           echo "FAILURE"
-          
