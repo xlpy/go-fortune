@@ -47,7 +47,7 @@ jobs:
             *Metriculation* : A0205823L\n
             *Email*: xenalimpinying@gmail.com\n
             *Git*: https://github.com/xlpy/go-fortune\n
-            *Image*: https://hub.docker.com/r/xenalimpinying/go-fortune/tags?page=1&name=${{ github.sha }}'
+            *Image*: https://hub.docker.com/r/xenalimpinying/go-fortune/'
           SLACK_TITLE: 'Image build and signed'
           SLACK_USERNAME: Xena
           ENABLE_ESCAPES: true
