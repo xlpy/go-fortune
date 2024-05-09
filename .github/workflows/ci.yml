@@ -98,18 +98,16 @@ jobs:
       - name: Install Cosign
         if: ${{ steps.trivy.outcome == 'success' }}
         uses: sigstore/cosign-installer@main
-        with:
-          cosign-release: 'v1.2.0'
 
       - name: Sign image with a key pair
         if: ${{ steps.trivy.outcome == 'success' }}
         run: |         
-          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
+          echo "${{secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
           cosign sign -key cosign.key xenalimpinying/go-fortune:${{ github.sha }}
         env:
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+        
 
         
         
