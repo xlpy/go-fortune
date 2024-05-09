@@ -8,14 +8,115 @@ on:
       - v[0-9]+.[0-9]+
 
 jobs:
+  #scan:
+    # check out
+    # run trivy
+    # if success -> send slack notif, proceed to docker job
+    # if failure -> send notif and upload report
+  #docker:
   build:
+
     runs-on: ubuntu-latest
+
+    continue-on-error: true
+
     steps:
       - name: Check out Branch
         uses: actions/checkout@v2
 
       - name: Run Trivy vulnerability scanner
+        id: trivy
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          input: './'
+          scan-ref: '.'  
+          severity: 'LOW'
+          exit-code: 1
+          format: 'table'
+          output: 'trivy-report.txt'
+      
+          
+      - name: Send custom JSON data to Slack workflow
+        if: ${{ success()}}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: 'test-submission'
+          SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
+          SLACK_ICON: https://github.com/rtCamp.png?size=48
+          SLACK_MESSAGE: '*Name*: Xena Lim Pin Ying\n
+            *Metriculation* : A0205823L\n
+            *Email*: xenalimpinying@gmail.com\n
+            *Git*: https://github.com/xlpy/go-fortune\n
+            *Image*: https://hub.docker.com/r/xenalimpinying/go-fortune/tags?page=1&name=${{ github.sha }}'
+          SLACK_TITLE: 'Image build and signed'
+          SLACK_USERNAME: Xena
+          ENABLE_ESCAPES: true
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        
+      - name: Send Failure Notification to Slack
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: 'test-submission'
+          SLACK_COLOR: ${{ job.status }} 
+          SLACK_ICON: https://github.com/rtCamp.png?size=48
+          SLACK_MESSAGE: 'Failed trivy scan, see uploaded report'
+          SLACK_TITLE: 'Scan failed - Xena'
+          SLACK_USERNAME: Xena
+          ENABLE_ESCAPES: true
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send Notification to Slack (Failed)
+        if: ${{ failure() }}
+        uses: MeilCli/slack-upload-file@v4
+        with:
+          slack_token: ${{ secrets.SLACK_TOKEN }}
+          channel_id: ${{ secrets.SLACK_CHANNEL_ID }}
+          file_path: 'trivy-report.txt'
+          initial_comment: 'Scan report by Xena'
+      
+      - name: Log in to Docker Hub
+        if: ${{ steps.trivy.outcome == 'success' }}
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Build and push Docker image
+        if: ${{ steps.trivy.outcome == 'success' }}
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          tags: xenalimpinying/go-fortune:${{ github.sha }}
+          push: true
+
+      - name: Install Cosign
+        if: ${{ steps.trivy.outcome == 'success' }}
+        uses: sigstore/cosign-installer@main
+        with:
+          cosign-release: 'v1.2.0'
+
+      - name: Sign Docker image with Cosign 
+        if: steps.trivy.outcome == 'success'
+        run: |
+          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" | base64 --decode > cosign.key
+          cosign sign -key cosign.key xenalimpinying/go-fortune:${{ github.sha }}
+        env:
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+
+      
+
+
+
+
+        
+
+
+
+      
+    
+
+
+        
+        
