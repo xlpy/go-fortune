@@ -105,7 +105,7 @@ jobs:
         if: ${{ steps.trivy.outcome == 'success' }}
         run: |         
           echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
-              cosign sign -key cosign.key xenalimpinying/go-fortune:${{ github.sha }}
+              cosign sign -- yes -key cosign.key xenalimpinying/go-fortune:${{ github.sha }}
         env:
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
