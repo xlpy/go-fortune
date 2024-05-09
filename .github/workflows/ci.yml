@@ -83,14 +83,55 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+
       - name: Build and push Docker image
-        if: ${{ steps.trivy.outcome == 'success' }}
+        id: build-and-push
         uses: docker/build-push-action@v2
         with:
           context: .
           file: ./Dockerfile
           tags: xenalimpinying/go-fortune:${{ github.sha }}
           push: true
+        continue-on-error: false # Recommended to handle errors explicitly
+        
+      - name: Get the image digest
+        id: get-digest
+        run: |
+          DIGEST=$(docker image inspect xenalimpinying/go-fortune:${{ github.sha }} --format='{{.Id}}')
+          echo "DIGEST=$DIGEST" >> $GITHUB_ENV
+          echo "DIGEST=${DIGEST}" >> $GITHUB_OUTPUT
+        
+
+      # - name: Build and push Docker image
+      #   if: ${{ steps.trivy.outcome == 'success' }}
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     context: .
+      #     file: ./Dockerfile
+      #     tags: xenalimpinying/go-fortune:${{ github.sha }}
+      #     push: true
+
+      # - name: Docker meta
+      #   id: docker_meta
+      #   uses: docker/metadata-action@v3
+      #   with:
+      #     images: xenalimpinying/go-fortune
+      #     tags: type=sha,prefix=${{ github.sha }}
+
+      # - name: Build and push Docker image
+      #   id: build-and-push
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     context: .
+      #     file: ./Dockerfile
+      #     tags: xenalimpinying/go-fortune:${{ github.sha }}
+      #     push: true
+      
+      # - name: Use Docker Image Digest
+      #   run: echo "The digest of the pushed image is ${{ steps.build-and-push.outputs.digest }}"
+        
+        
+
 
       - name: Install Cosign
         if: ${{ steps.trivy.outcome == 'success' }}
@@ -98,12 +139,50 @@ jobs:
         with:
           cosign-release: 'v1.2.0'
   
-      - name: Sign Docker image with Cosign 
+      # - name: Sign Docker image with Cosign 
+      #   if: ${{ steps.trivy.outcome == 'success' }}
+      #   run: |
+      #     echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
+      #     cosign sign -key cosign.key xenalimpinying/go-fortune:${{ github.sha }}
+      #   env:
+      #     COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+
+      # - name: Sign image with a key
+      #   run: |
+      #     images=""
+      #     for tag in ${TAGS}; do
+      #       images+="${tag}@${DIGEST} "
+      #     done
+      #     cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
+      #   env:
+      #     TAGS: ${{ steps.docker_meta.outputs.tags }}
+      #     COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+      #     COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      #     DIGEST: ${{ steps.build-and-push.outputs.digest }}
+
+      - name: Sign image with a key 
         if: ${{ steps.trivy.outcome == 'success' }}
         run: |
-          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
-          cosign sign -key cosign.key xenalimpinying/go-fortune:${{ github.sha }}
+          images=""
+          for tag in $TAGS; do
+            images+="$tag@${DIGEST} "
+          done
+          echo "Signing images: $images"
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY $images
         env:
+          TAGS: ${{ steps.docker_meta.outputs.tags }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+          DIGEST: ${{ steps.get-digest.outputs.DIGEST }}
+
+
+        
+
+
+
+      
+    
+
+
         
         
