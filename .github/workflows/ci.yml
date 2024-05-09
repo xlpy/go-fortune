@@ -101,7 +101,7 @@ jobs:
         with:
           cosign-release: 'v1.2.0'
 
-      - name: Sign image with a key pair
+      - name: Sign image with a key pair.
         if: ${{ steps.trivy.outcome == 'success' }}
         run: |         
           echo "$COSIGN_PRIVATE_KEY" | cosign sign -key /dev/stdin xenalimpinying/go-fortune:${{ github.sha }}
